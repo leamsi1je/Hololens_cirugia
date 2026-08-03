@@ -79,7 +79,7 @@ public class HoloLensStreamReceiver : MonoBehaviour
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"[HoloLensStreamReceiver] Conexión perdida/fallida: {e.Message}. Reintentando...");
+                Debug.LogWarning($"[HoloLensStreamReceiver] Conexión perdida/fallida: {e.GetType().Name} - {e.Message}\n{e.StackTrace}");
             }
 
             Thread.Sleep((int)(reconnectDelaySeconds * 1000));
@@ -102,10 +102,15 @@ public class HoloLensStreamReceiver : MonoBehaviour
         // Decodifica y aplica el frame más reciente en el hilo principal (requerido por Unity)
         if (_frameQueue.TryDequeue(out var jpg))
         {
+            Debug.Log($"[HoloLensStreamReceiver] Frame recibido: {jpg.Length} bytes");
             if (_tex.LoadImage(jpg)) // LoadImage redimensiona automáticamente
             {
                 if (targetRenderer != null)
                     targetRenderer.material.mainTexture = _tex;
+            }
+            else
+            {
+                Debug.LogWarning("[HoloLensStreamReceiver] LoadImage falló al decodificar el frame.");
             }
         }
     }
