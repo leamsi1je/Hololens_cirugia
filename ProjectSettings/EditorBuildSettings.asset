@@ -11,9 +11,12 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Samples/Mixed Reality Toolkit Extensions/2.8.3/HandPhysicsService/HandPhysicsServiceExample.unity
     guid: ac738d830892ff44e92039d5416b41f2
-  - enabled: 1
+  - enabled: 0
     path: Assets/Samples/Mixed Reality Toolkit Examples/2.8.3/Demos - HandTracking/Scenes/HandInteractionExamples.unity
     guid: 3dd4a396b5225f8469b9a1eb608bfa57
+  - enabled: 1
+    path: Assets/Scenes/MainScene.unity
+    guid: 1f427dac12974af48a6a411f72d26d5e
   m_configObjects:
     com.unity.xr.arfoundation.simulation_settings: {fileID: 11400000, guid: 927799a38995fef459596b8a577a52f0, type: 2}
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: 1c3ea17efaebc4049a55cabc8f83c401, type: 2}
