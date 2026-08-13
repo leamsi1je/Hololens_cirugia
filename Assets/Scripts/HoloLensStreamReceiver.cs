@@ -2,6 +2,10 @@
 // -----------------------------------------------------------------------
 // LADO HOLOLENS (Build UWP / ARM64)
 // No requiere plugins nativos: usa System.Net.Sockets, 100% compatible UWP.
+// VERSION UDP: se registra con el servidor mandando paquetes HELLO
+// periódicos, y recibe los frames partidos en chunks, reensamblándolos.
+// Si falta un chunk de un frame, ese frame se descarta (no se espera
+// reenvío) — prioriza baja latencia sobre completitud, ideal para WiFi.
 //
 // SETUP EN LA ESCENA:
 // 1. Crea un Quad (GameObject > 3D Object > Quad) a la distancia deseada
@@ -12,10 +16,14 @@
 // 5. Configura "serverIp" con la IP de la PC (Bridge) en tu red local.
 // 6. Build > Universal Windows Platform > ARM64. Habilita capability
 //    "Internet Client" en Publishing Settings (Player Settings).
+//
+// PROTOCOLO: ver comentario en NdiToHoloLensSender.cs (mismo formato).
 // -----------------------------------------------------------------------
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
@@ -25,15 +33,27 @@ public class HoloLensStreamReceiver : MonoBehaviour
     [Header("Conexión")]
     public string serverIp = "192.168.1.100"; // IP de la PC que corre el Sender
     public int serverPort = 9999;
-    public float reconnectDelaySeconds = 2f;
+    public float helloIntervalSeconds = 1f;   // frecuencia de registro/keepalive hacia el servidor
 
     [Header("Salida de video")]
     public Renderer targetRenderer; // el Quad/pantalla donde se muestra el stream
 
-    Thread _networkThread;
+    UdpClient _udp;
+    IPEndPoint _serverEndPoint;
+    Thread _receiveThread;
+    Thread _helloThread;
     volatile bool _running;
+
     readonly ConcurrentQueue<byte[]> _frameQueue = new ConcurrentQueue<byte[]>();
     Texture2D _tex;
+
+    // Reensamblado del frame en curso
+    readonly object _reassemblyLock = new object();
+    uint _currentFrameId;
+    bool _currentFrameActive;
+    int _currentTotalChunks;
+    int _currentReceivedChunks;
+    byte[][] _currentChunks;
 
     void Start()
     {
@@ -41,59 +61,100 @@ public class HoloLensStreamReceiver : MonoBehaviour
         if (targetRenderer != null)
             targetRenderer.material.mainTexture = _tex;
 
+        _serverEndPoint = new IPEndPoint(IPAddress.Parse(serverIp), serverPort);
+        _udp = new UdpClient(0); // puerto local aleatorio
         _running = true;
-        _networkThread = new Thread(NetworkLoop) { IsBackground = true };
-        _networkThread.Start();
+
+        _receiveThread = new Thread(ReceiveLoop) { IsBackground = true };
+        _receiveThread.Start();
+
+        _helloThread = new Thread(HelloLoop) { IsBackground = true };
+        _helloThread.Start();
     }
 
-    void NetworkLoop()
+    // Manda un HELLO periódico para registrarse/mantenerse vivo ante el servidor.
+    void HelloLoop()
     {
+        byte[] hello = new byte[] { 0x02 };
+        while (_running)
+        {
+            try { _udp.Send(hello, hello.Length, _serverEndPoint); }
+            catch (Exception e) { Debug.LogWarning($"[HoloLensStreamReceiver] No se pudo enviar HELLO: {e.Message}"); }
+
+            Thread.Sleep((int)(helloIntervalSeconds * 1000));
+        }
+    }
+
+    void ReceiveLoop()
+    {
+        var anyEp = new IPEndPoint(IPAddress.Any, 0);
+        int chunkCount = 0;
         while (_running)
         {
             try
             {
-                using (var client = new TcpClient())
+                byte[] packet = _udp.Receive(ref anyEp);
+                chunkCount++;
+                if (chunkCount <= 5 || chunkCount % 50 == 0)
+                    Debug.Log($"[HoloLensStreamReceiver] Paquete UDP recibido #{chunkCount}, {packet.Length} bytes, primer byte={packet[0]}");
+
+                if (packet.Length < 9 || packet[0] != 0x01) continue; // no es FRAME_CHUNK
+
+                uint frameId = BitConverter.ToUInt32(packet, 1);
+                ushort chunkIndex = BitConverter.ToUInt16(packet, 5);
+                ushort totalChunks = BitConverter.ToUInt16(packet, 7);
+                int payloadLen = packet.Length - 9;
+
+                lock (_reassemblyLock)
                 {
-                    client.NoDelay = true;
-                    client.Connect(serverIp, serverPort);
-                    Debug.Log("[HoloLensStreamReceiver] Conectado al servidor NDI Bridge.");
-
-                    using (var stream = client.GetStream())
+                    // Frame nuevo: descarta cualquier reensamblado incompleto anterior.
+                    if (!_currentFrameActive || frameId != _currentFrameId)
                     {
-                        var lenBuf = new byte[4];
-                        while (_running && client.Connected)
+                        _currentFrameId = frameId;
+                        _currentFrameActive = true;
+                        _currentTotalChunks = totalChunks;
+                        _currentReceivedChunks = 0;
+                        _currentChunks = new byte[totalChunks][];
+                    }
+
+                    if (chunkIndex < _currentChunks.Length && _currentChunks[chunkIndex] == null)
+                    {
+                        byte[] payload = new byte[payloadLen];
+                        Buffer.BlockCopy(packet, 9, payload, 0, payloadLen);
+                        _currentChunks[chunkIndex] = payload;
+                        _currentReceivedChunks++;
+
+                        if (_currentReceivedChunks == _currentTotalChunks)
                         {
-                            ReadExact(stream, lenBuf, 4);
-                            int len = BitConverter.ToInt32(lenBuf, 0);
-                            if (len <= 0 || len > 50_000_000) throw new Exception("Frame length inválido");
+                            // Frame completo: ensambla y encola.
+                            int totalLen = 0;
+                            foreach (var c in _currentChunks) totalLen += c.Length;
 
-                            var frameBuf = new byte[len];
-                            ReadExact(stream, frameBuf, len);
+                            byte[] full = new byte[totalLen];
+                            int pos = 0;
+                            foreach (var c in _currentChunks)
+                            {
+                                Buffer.BlockCopy(c, 0, full, pos, c.Length);
+                                pos += c.Length;
+                            }
 
-                            // Descarta frames viejos si el consumidor va más lento (baja latencia > calidad)
-                            while (_frameQueue.Count > 1) _frameQueue.TryDequeue(out _);
-                            _frameQueue.Enqueue(frameBuf);
+                            while (_frameQueue.Count > 1) _frameQueue.TryDequeue(out _); // solo el más reciente
+                            _frameQueue.Enqueue(full);
+                            Debug.Log($"[HoloLensStreamReceiver] Frame completo ensamblado: {full.Length} bytes, frameId={frameId}");
+
+                            _currentFrameActive = false;
                         }
                     }
                 }
             }
-            catch (Exception e)
+            catch (SocketException)
             {
-                Debug.LogWarning($"[HoloLensStreamReceiver] Conexión perdida/fallida: {e.GetType().Name} - {e.Message}\n{e.StackTrace}");
+                break; // socket cerrado
             }
-
-            Thread.Sleep((int)(reconnectDelaySeconds * 1000));
-        }
-    }
-
-    static void ReadExact(NetworkStream stream, byte[] buffer, int count)
-    {
-        int offset = 0;
-        while (offset < count)
-        {
-            int read = stream.Read(buffer, offset, count - offset);
-            if (read <= 0) throw new Exception("Conexión cerrada por el servidor");
-            offset += read;
+            catch (ObjectDisposedException)
+            {
+                break;
+            }
         }
     }
 
@@ -102,15 +163,10 @@ public class HoloLensStreamReceiver : MonoBehaviour
         // Decodifica y aplica el frame más reciente en el hilo principal (requerido por Unity)
         if (_frameQueue.TryDequeue(out var jpg))
         {
-            Debug.Log($"[HoloLensStreamReceiver] Frame recibido: {jpg.Length} bytes");
             if (_tex.LoadImage(jpg)) // LoadImage redimensiona automáticamente
             {
                 if (targetRenderer != null)
                     targetRenderer.material.mainTexture = _tex;
-            }
-            else
-            {
-                Debug.LogWarning("[HoloLensStreamReceiver] LoadImage falló al decodificar el frame.");
             }
         }
     }
@@ -118,5 +174,6 @@ public class HoloLensStreamReceiver : MonoBehaviour
     void OnDestroy()
     {
         _running = false;
+        try { _udp?.Close(); } catch { }
     }
 }

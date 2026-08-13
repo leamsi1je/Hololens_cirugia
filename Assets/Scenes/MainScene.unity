@@ -128,11 +128,15 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 0}
+    m_TransformParent: {fileID: 1477829656}
     m_Modifications:
     - target: {fileID: 2204069621426241315, guid: 3f1f46cbecbe08e46a303ccfdb5b498a, type: 3}
       propertyPath: m_Name
       value: Boton_Higado
+      objectReference: {fileID: 0}
+    - target: {fileID: 2204069621426241315, guid: 3f1f46cbecbe08e46a303ccfdb5b498a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2204069621878992557, guid: 3f1f46cbecbe08e46a303ccfdb5b498a, type: 3}
       propertyPath: m_Mesh
@@ -378,7 +382,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &563538061
 Transform:
   m_ObjectHideFlags: 0
@@ -668,6 +672,11 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
+--- !u!4 &934713339 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2204069623020599746, guid: 3f1f46cbecbe08e46a303ccfdb5b498a, type: 3}
+  m_PrefabInstance: {fileID: 2117528776}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &978147463
 GameObject:
   m_ObjectHideFlags: 0
@@ -706,7 +715,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   serverIp: 10.36.202.163
   serverPort: 9999
-  reconnectDelaySeconds: 2
+  helloIntervalSeconds: 1
   targetRenderer: {fileID: 978147466}
 --- !u!64 &978147465
 MeshCollider:
@@ -935,7 +944,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!136 &1223004366
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -1048,7 +1057,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1294629834}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1056,8 +1065,13 @@ Transform:
   - {fileID: 563538061}
   - {fileID: 1754208762}
   - {fileID: 1223004369}
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1477829656}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!4 &1299365864 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2204069623020599746, guid: 3f1f46cbecbe08e46a303ccfdb5b498a, type: 3}
+  m_PrefabInstance: {fileID: 39930446}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1325120099
 GameObject:
   m_ObjectHideFlags: 0
@@ -1152,6 +1166,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+--- !u!4 &1373472650 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2204069623020599746, guid: 3f1f46cbecbe08e46a303ccfdb5b498a, type: 3}
+  m_PrefabInstance: {fileID: 1855572594}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1477829654
 GameObject:
   m_ObjectHideFlags: 0
@@ -1197,6 +1216,10 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 978147468}
+  - {fileID: 1294629835}
+  - {fileID: 1299365864}
+  - {fileID: 934713339}
+  - {fileID: 1373472650}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1754208761
@@ -1217,7 +1240,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1754208762
 Transform:
   m_ObjectHideFlags: 0
@@ -1310,11 +1333,15 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 0}
+    m_TransformParent: {fileID: 1477829656}
     m_Modifications:
     - target: {fileID: 2204069621426241315, guid: 3f1f46cbecbe08e46a303ccfdb5b498a, type: 3}
       propertyPath: m_Name
       value: Boton_Arteria
+      objectReference: {fileID: 0}
+    - target: {fileID: 2204069621426241315, guid: 3f1f46cbecbe08e46a303ccfdb5b498a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2204069621878992557, guid: 3f1f46cbecbe08e46a303ccfdb5b498a, type: 3}
       propertyPath: m_Mesh
@@ -1439,11 +1466,15 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 0}
+    m_TransformParent: {fileID: 1477829656}
     m_Modifications:
     - target: {fileID: 2204069621426241315, guid: 3f1f46cbecbe08e46a303ccfdb5b498a, type: 3}
       propertyPath: m_Name
       value: Boton_Rinon
+      objectReference: {fileID: 0}
+    - target: {fileID: 2204069621426241315, guid: 3f1f46cbecbe08e46a303ccfdb5b498a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2204069621878992557, guid: 3f1f46cbecbe08e46a303ccfdb5b498a, type: 3}
       propertyPath: m_Mesh
@@ -1571,8 +1602,4 @@ SceneRoots:
   - {fileID: 70568570}
   - {fileID: 479224154}
   - {fileID: 1477829656}
-  - {fileID: 1294629835}
   - {fileID: 699262412}
-  - {fileID: 39930446}
-  - {fileID: 2117528776}
-  - {fileID: 1855572594}
