@@ -57,12 +57,15 @@ public class HoloLensStreamReceiver : MonoBehaviour
 
     void Start()
     {
+        Debug.Log($"[HoloLensStreamReceiver] Start() ejecutado. Conectando a {serverIp}:{serverPort}...");
+
         _tex = new Texture2D(2, 2, TextureFormat.RGB24, false);
         if (targetRenderer != null)
             targetRenderer.material.mainTexture = _tex;
 
         _serverEndPoint = new IPEndPoint(IPAddress.Parse(serverIp), serverPort);
         _udp = new UdpClient(0); // puerto local aleatorio
+        Debug.Log($"[HoloLensStreamReceiver] Socket UDP local creado en puerto {((IPEndPoint)_udp.Client.LocalEndPoint).Port}");
         _running = true;
 
         _receiveThread = new Thread(ReceiveLoop) { IsBackground = true };
@@ -76,9 +79,16 @@ public class HoloLensStreamReceiver : MonoBehaviour
     void HelloLoop()
     {
         byte[] hello = new byte[] { 0x02 };
+        int sentCount = 0;
         while (_running)
         {
-            try { _udp.Send(hello, hello.Length, _serverEndPoint); }
+            try
+            {
+                _udp.Send(hello, hello.Length, _serverEndPoint);
+                sentCount++;
+                if (sentCount <= 3 || sentCount % 10 == 0)
+                    Debug.Log($"[HoloLensStreamReceiver] HELLO #{sentCount} enviado a {_serverEndPoint}");
+            }
             catch (Exception e) { Debug.LogWarning($"[HoloLensStreamReceiver] No se pudo enviar HELLO: {e.Message}"); }
 
             Thread.Sleep((int)(helloIntervalSeconds * 1000));
@@ -175,5 +185,6 @@ public class HoloLensStreamReceiver : MonoBehaviour
     {
         _running = false;
         try { _udp?.Close(); } catch { }
+        
     }
 }
