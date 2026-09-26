@@ -1,16 +1,16 @@
 using UnityEngine;
 
-public class BotonOrgano : MonoBehaviour
+public class Boton_organo : MonoBehaviour
 {
     [Tooltip("Arrastra aquí el órgano que este botón debe controlar")]
     public GameObject organoAsociado;
 
-    // Esta función se ejecuta cuando haces clic en el objeto (requiere un Collider)
+    // Se ejecuta al hacer clic en el objeto (requiere un Collider)
     private void OnMouseDown()
     {
         if (organoAsociado != null)
         {
-            // Cambia el estado: si está activo lo desactiva, y si está inactivo lo activa
+            // Alterna entre activo e inactivo
             organoAsociado.SetActive(!organoAsociado.activeSelf);
         }
         else
