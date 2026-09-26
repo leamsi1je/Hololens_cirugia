@@ -1,21 +1,24 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+using TMPro;
 using UnityEngine;
 
-public class BotonOrgano : MonoBehaviour
+namespace Microsoft.MixedReality.Toolkit.Examples.Demos
 {
-    [Tooltip("Arrastra aquí el órgano que este botón debe controlar")]
-    public GameObject organoAsociado;
-
-    // Esta función se ejecuta cuando haces clic en el objeto (requiere un Collider)
-    private void OnMouseDown()
+    [AddComponentMenu("Scripts/MRTK/Examples/DebugTextOutput")]
+    public class DebugTextOutput : MonoBehaviour
     {
-        if (organoAsociado != null)
+        [SerializeField]
+        protected TextMeshPro textMesh = null;
+
+        public void SetTextWithTimestamp(string text)
         {
-            // Cambia el estado: si está activo lo desactiva, y si está inactivo lo activa
-            organoAsociado.SetActive(!organoAsociado.activeSelf);
-        }
-        else
-        {
-            Debug.LogWarning("Falta asignar el órgano al botón: " + gameObject.name);
+            // Do something on specified distance for fire event
+            if (textMesh != null)
+            {
+                textMesh.text = $"{text} ({Time.unscaledTime.ToString()})";
+            }
         }
     }
 }
